@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Explore</h1>
+
+{% for lang in languages %}
+  <h2>{{ lang.name }} ({{ lang.code }})</h2>
+  {% if lang.decks.all %}
+    <ul>
+      {% for deck in lang.decks.all %}
+        <li>
+          <b>{{ deck.title }}</b>
+          {% if user.is_authenticated %}
+            <button class="btn"
+              hx-post="/library/add/{{ deck.id }}/"
+              hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+              hx-swap="none">
+              Add to library
+            </button>
+          {% endif %}
+          <span class="muted">
+            {% if deck.is_generated %}generated{% else %}manual{% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No decks yet.</p>
+  {% endif %}
+{% endfor %}
+{% endblock %}
