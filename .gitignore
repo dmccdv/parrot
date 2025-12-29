@@ -17,3 +17,7 @@ Thumbs.db
 
 .vscode/
 .idea/
+
+dev_tools/
+.dev_tools/
+*.csv
