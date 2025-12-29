@@ -17,6 +17,36 @@ def study_start(request, deck_id: int):
     deck = get_object_or_404(Deck, id=deck_id)
     ud = get_object_or_404(UserDeck, user=request.user, deck=deck)
 
+    existing = (
+        StudySession.objects
+        .filter(user=request.user, deck=deck, status="active")
+        .order_by("-started_at")
+        .first()
+    )
+
+    if existing:
+        if existing.index >= len(existing.queue):
+            existing.status = "finished"
+            existing.finished_at = timezone.now()
+            existing.save(update_fields=["status", "finished_at"])
+        else:
+            while existing.index < len(existing.queue):
+                card_id = existing.queue[existing.index]
+                card = Flashcard.objects.filter(id=card_id).first()
+                if card:
+                    return render(request, "study/study.html", {
+                        "deck": deck,
+                        "session": existing,
+                        "card": card,
+                        "resumed": True,
+                    })
+                existing.index += 1
+                existing.save(update_fields=["index"])
+
+            existing.status = "finished"
+            existing.finished_at = timezone.now()
+            existing.save(update_fields=["status", "finished_at"])
+
     queue = select_session_queue(
         user=request.user,
         deck=deck,
@@ -26,14 +56,20 @@ def study_start(request, deck_id: int):
     )
 
     if not queue:
-        return (render, "study/empty.html", {"deck": deck})
-    
-    session = StudySession.objects.create(user=request.user, deck=deck, queue=queue, index=0)
+        return render(request, "study/empty.html", {"deck": deck})
+
+    session = StudySession.objects.create(
+        user=request.user,
+        deck=deck,
+        queue=queue,
+        index=0,
+        status="active",
+    )
     session.rotate_nonce()
     session.save(update_fields=["current_nonce"])
 
-    first_card = Flashcard.objects.get(ud=queue[0])
-    return render(request, "study/study.html", {"deck": deck, "session": session, "card": first_card})
+    card = Flashcard.objects.get(id=queue[0])
+    return render(request, "study/study.html", {"deck": deck, "session": session, "card": card, "resumed": False})
 
 
 @login_required

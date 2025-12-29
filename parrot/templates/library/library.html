@@ -11,10 +11,24 @@
         <div>
           <b>{{ ud.deck.title }}</b>
           <div class="muted">{{ ud.deck.language.name }} ({{ ud.deck.language.code }})</div>
-          <div class="muted">Due: {{ ud.cached_due_count }} • New: {{ ud.cached_new_count }} • Total: {{ ud.cached_total_in_deck }}</div>
+          <div class="muted">
+            Due: {{ ud.cached_due_count }}
+            • New: {{ ud.cached_new_count }}
+            • Total: {{ ud.cached_total_in_deck }}
+          </div>
         </div>
+
         <div class="row">
-          <a class="btn btn-primary" href="/study/start/{{ ud.deck.id }}/">Study</a>
+          {% if ud.has_active_session %}
+            <a class="btn btn-primary" href="/study/start/{{ ud.deck.id }}/">
+              Resume
+            </a>
+          {% else %}
+            <a class="btn btn-primary" href="/study/start/{{ ud.deck.id }}/">
+              Study
+            </a>
+          {% endif %}
+
           <button class="btn"
             hx-post="/library/remove/{{ ud.deck.id }}/"
             hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
