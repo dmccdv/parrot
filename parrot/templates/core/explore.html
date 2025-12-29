@@ -7,20 +7,27 @@
   {% if lang.decks.all %}
     <ul>
       {% for deck in lang.decks.all %}
-        <li>
-          <b>{{ deck.title }}</b>
-          {% if user.is_authenticated %}
-            <button class="btn"
-              hx-post="/library/add/{{ deck.id }}/"
-              hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
-              hx-swap="none">
-              Add to library
-            </button>
+      <li>
+        <b>{{ deck.title }}</b>
+        {% if user.is_authenticated %}
+          <button class="btn"
+            hx-post="{% url 'library_add' deck.id %}"
+            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+            hx-swap="none">
+            Add to library
+          </button>
+        {% endif %}
+      
+        <span class="muted">
+          {% if deck.is_generated %}generated{% else %}manual{% endif %}
+          •
+          {% if deck.known_cards is not None %}
+            You already know {{ deck.known_cards }} of {{ deck.total_cards }} words
+          {% else %}
+            {{ deck.total_cards }} cards
           {% endif %}
-          <span class="muted">
-            {% if deck.is_generated %}generated{% else %}manual{% endif %}
-          </span>
-        </li>
+        </span>
+      </li>
       {% endfor %}
     </ul>
   {% else %}
