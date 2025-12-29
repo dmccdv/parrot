@@ -23,6 +23,10 @@ class UserDeck(models.Model):
     total_reviews = models.PositiveIntegerField(default=0)
     total_new_seen = models.PositiveIntegerField(default=0)
 
+    new_today = models.PositiveIntegerField(default=0)
+    new_today_date = models.DateField(null=True, blank=True)
+
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["user", "deck"], name="uniq_user_deck"),
@@ -40,3 +44,11 @@ class UserDeck(models.Model):
         self.reviews_today += n
         self.total_reviews += n
         self.last_studied_at = timezone.now()
+    
+    def bump_new_today(self, n=1):
+        today = timezone.localdate()
+        if self.new_today_date != today:
+            self.new_today_date = today
+            self.new_today = 0
+        self.new_today += n
+        self.total_new_seen += n

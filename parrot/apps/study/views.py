@@ -15,7 +15,6 @@ from apps.study.services.scheduler import sm2_update
 @login_required
 def study_start(request, deck_id: int):
     deck = get_object_or_404(Deck, id=deck_id)
-    ud = get_object_or_404(UserDeck, user=request.user, deck=deck)
 
     existing = (
         StudySession.objects
@@ -47,28 +46,51 @@ def study_start(request, deck_id: int):
             existing.finished_at = timezone.now()
             existing.save(update_fields=["status", "finished_at"])
 
-    queue = select_session_queue(
-        user=request.user,
-        deck=deck,
-        chunk_size=ud.chunk_size,
-        new_ratio=ud.new_ratio,
-        daily_new_limit=ud.daily_new_limit,
-    )
+    with transaction.atomic():
+        ud = get_object_or_404(
+            UserDeck.objects.select_for_update(),
+            user=request.user,
+            deck=deck,
+        )
 
-    if not queue:
-        return render(request, "study/empty.html", {"deck": deck})
+        today = timezone.localdate()
+        if ud.new_today_date != today:
+            ud.new_today_date = today
+            ud.new_today = 0
 
-    session = StudySession.objects.create(
-        user=request.user,
-        deck=deck,
-        queue=queue,
-        index=0,
-        status="active",
-    )
-    session.rotate_nonce()
-    session.save(update_fields=["current_nonce"])
+        queue = select_session_queue(
+            user=request.user,
+            deck=deck,
+            chunk_size=ud.chunk_size,
+            new_ratio=ud.new_ratio,
+            daily_new_limit=ud.daily_new_limit,
+            new_today=ud.new_today,
+        )
 
-    card = Flashcard.objects.get(id=queue[0])
+        if not queue:
+            return render(request, "study/empty.html", {"deck": deck})
+
+        existing_progress_ids = set(
+            CardProgress.objects.filter(user=request.user, card_id__in=queue)
+            .values_list("card_id", flat=True)
+        )
+        new_in_queue = sum(1 for cid in queue if cid not in existing_progress_ids)
+
+        ud.new_today += new_in_queue
+        ud.total_new_seen += new_in_queue  
+        ud.save(update_fields=["new_today", "new_today_date", "total_new_seen"])
+
+        session = StudySession.objects.create(
+            user=request.user,
+            deck=deck,
+            queue=queue,
+            index=0,
+            status="active",
+        )
+        session.rotate_nonce()
+        session.save(update_fields=["current_nonce"])
+
+    card = Flashcard.objects.get(id=session.queue[0])
     return render(request, "study/study.html", {"deck": deck, "session": session, "card": card, "resumed": False})
 
 
