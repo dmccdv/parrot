@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'apps.core.apps.CoreConfig',
     'apps.library.apps.LibraryConfig',
     'apps.study.apps.StudyConfig',
+    'apps.accounts.apps.AccountsConfig'
 ]
 
 MIDDLEWARE = [
@@ -79,9 +80,9 @@ TEMPLATES = [
     },
 ]
 
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "explore"
+LOGOUT_REDIRECT_URL = "explore"
 
 STATIC_URL = 'static/'
 
