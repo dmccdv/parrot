@@ -1,5 +1,6 @@
 from django import forms
 from apps.library.models import UserDeck
+from apps.core.models import Deck, Flashcard
 
 
 class UserDeckSettingsForm(forms.ModelForm):
@@ -28,3 +29,21 @@ class UserDeckSettingsForm(forms.ModelForm):
         if v > 1:
             raise forms.ValidationError("New ratio should be between 0 and 1 (e.g. 0.3).")
         return v
+
+
+class DeckCreateForm(forms.ModelForm):
+    class Meta:
+        model = Deck
+        fields = ["language", "title", "description"]
+
+
+class CardCreateForm(forms.ModelForm):
+    class Meta:
+        model = Flashcard
+        fields = ["word", "translation", "context_sentence", "notes", "tags"]
+
+
+class CardEditForm(forms.ModelForm):
+    class Meta:
+        model = Flashcard
+        fields = ["word", "translation", "context_sentence", "notes", "tags"]

@@ -1,6 +1,5 @@
-# Figure out reasoning blank vs null, max length, indexes, meta classes for deck and deckcard
-
 from django.db import models
+from django.conf import settings
 
 
 class Language(models.Model):
@@ -23,6 +22,13 @@ class Deck(models.Model):
     version = models.CharField(max_length=64, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_decks",
+    )
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["language", "title"], name="uniq_deck_title_per_language"),
@@ -44,6 +50,13 @@ class Flashcard(models.Model):
     frequency_rank = models.PositiveIntegerField(null=True, blank=True)
     tags = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_cards",
+    )
 
     class Meta:
         constraints = [

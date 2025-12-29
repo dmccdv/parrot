@@ -1,15 +1,21 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Max
+from django.db import transaction
 
-from apps.core.models import Deck
+from apps.core.models import Deck, Flashcard, DeckCard
 from apps.library.models import UserDeck
 from apps.library.services.counts import compute_due_new_counts
-from apps.library.forms import UserDeckSettingsForm
+from apps.library.forms import UserDeckSettingsForm, DeckCreateForm, CardCreateForm, CardEditForm
 from apps.study.models import StudySession
+
+def _require_deck_owner(request, deck: Deck):
+    if deck.created_by_id != request.user.id:
+        return HttpResponseForbidden("You can only manage decks you created.")
+    return None
 
 
 @login_required
@@ -81,3 +87,90 @@ def deck_settings(request, deck_id: int):
         form = UserDeckSettingsForm(instance=ud)
 
     return render(request, "library/deck_settings.html", {"ud": ud, "form": form})
+
+
+@login_required
+@transaction.atomic
+def deck_create(request):
+    if request.method == "POST":
+        form = DeckCreateForm(request.POST)
+        if form.is_valid():
+            deck: Deck = form.save(commit=False)
+            deck.is_generated = False
+            deck.created_by = request.user
+            deck.save()
+
+            UserDeck.objects.get_or_create(user=request.user, deck=deck)
+
+            return redirect("deck_manage", deck_id=deck.id)
+    else:
+        form = DeckCreateForm()
+
+    return render(request, "library/deck_create.html", {"form": form})
+
+
+@login_required
+def deck_manage(request, deck_id: int):
+    deck = get_object_or_404(Deck.objects.select_related("language"), id=deck_id)
+
+    get_object_or_404(UserDeck, user=request.user, deck=deck)
+
+    denied = _require_deck_owner(request, deck)
+    if denied:
+        return denied
+
+    cards = (
+        Flashcard.objects
+        .filter(deck_cards__deck=deck)
+        .distinct()
+        .order_by("deck_cards__position", "id")
+    )
+
+    return render(request, "library/deck_manage.html", {"deck": deck, "cards": cards})
+
+
+@login_required
+@transaction.atomic
+def card_create(request, deck_id: int):
+    deck = get_object_or_404(Deck.objects.select_related("language"), id=deck_id)
+    get_object_or_404(UserDeck, user=request.user, deck=deck)
+
+    denied = _require_deck_owner(request, deck)
+    if denied:
+        return denied
+    
+    if request.method == "POST":
+        form = CardCreateForm(request.POST)
+        if form.is_valid():
+            card: Flashcard = form.save(commit=False)
+            card.language = deck.language
+            card.created_by = request.user
+            card.save()
+
+            max_pos = DeckCard.objects.filter(deck=deck).aggregate(m=Max("position"))["m"] or 0
+            DeckCard.objects.create(deck=deck, card=card, position=max_pos + 1)
+
+            return redirect("deck_manage", deck_id=deck.id)
+    else:
+        form = CardCreateForm()
+
+    return render(request, "library/card_create.html", {"deck": deck, "form": form})
+
+
+@login_required
+@transaction.atomic
+def card_edit(request, card_id: int):
+    card = get_object_or_404(Flashcard.objects.select_related("language"), id=card_id)
+
+    if card.created_by_id != request.user.id:
+        return HttpResponseForbidden("You can only edit cards you created.")
+
+    if request.method == "POST":
+        form = CardEditForm(request.POST, instance=card)
+        if form.is_valid():
+            form.save()
+            return redirect(request.POST.get("next") or "library")
+    else:
+        form = CardEditForm(instance=card)
+
+    return render(request, "library/card_edit.html", {"card": card, "form": form, "next": request.GET.get("next", "")})

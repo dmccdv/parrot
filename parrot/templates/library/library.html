@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Library</h1>
+<a class="btn btn-primary" href="{% url 'deck_create' %}">Create deck</a>
 
 {% if not user_decks %}
   <p>No decks yet. Go to Explore and add one.</p>
@@ -29,6 +29,9 @@
             </a>
           {% endif %}
           <a class="btn" href="{% url 'deck_settings' ud.deck.id %}">Settings</a>
+          {% if ud.deck.created_by_id == user.id %}
+            <a class="btn" href="{% url 'deck_manage' ud.deck.id %}">Manage</a>
+          {% endif %}
           <button class="btn"
             hx-post="/library/remove/{{ ud.deck.id }}/"
             hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Edit card</h1>
+<div class="muted">{{ card.language.name }} ({{ card.language.code }})</div>
+
+<form method="post" class="card" style="margin-top:12px;">
+  {% csrf_token %}
+  {{ form.as_p }}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <div class="row" style="gap:8px;">
+    <button class="btn btn-primary" type="submit">Save</button>
+    {% if next %}
+      <a class="btn" href="{{ next }}">Cancel</a>
+    {% else %}
+      <a class="btn" href="{% url 'library' %}">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
