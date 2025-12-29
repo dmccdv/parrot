@@ -11,4 +11,6 @@ urlpatterns = [
     path("library/decks/<int:deck_id>/cards/new/", views.card_create, name="card_create"),
     path("library/cards/<int:card_id>/edit/", views.card_edit, name="card_edit"),
     path("library/decks/<int:deck_id>/visibility/", views.deck_visibility, name="deck_visibility"),
+    path("library/decks/<int:deck_id>/export/", views.deck_export_csv, name="deck_export_csv"),
+    path("library/decks/<int:deck_id>/import/", views.deck_import_csv, name="deck_import_csv"),
 ]

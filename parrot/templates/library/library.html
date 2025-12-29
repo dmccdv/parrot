@@ -10,17 +10,16 @@
       <div class="row" style="justify-content:space-between;">
         <div>
           <b>{{ ud.deck.title }}</b>
-          {% if ud.deck.created_by_id == user.id %}
-            <a class="btn" href="{% url 'deck_visibility' ud.deck.id %}">
-              {% if ud.deck.is_public %}Public{% else %}Private{% endif %}
-            </a>
-          {% endif %}
-
           <div class="muted">{{ ud.deck.language.name }} ({{ ud.deck.language.code }})</div>
           <div class="muted">
             Due: {{ ud.cached_due_count }}
             • New: {{ ud.cached_new_count }}
             • Total: {{ ud.cached_total_in_deck }}
+          </div>
+          <div class="muted">
+          {% if ud.deck.created_by_id == user.id %}
+            {% if ud.deck.is_public %}Public{% else %}Private{% endif %}
+          {% endif %}
           </div>
         </div>
 

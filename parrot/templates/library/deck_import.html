@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Import CSV</h1>
+<div class="muted">{{ deck.title }} — {{ deck.language.name }} ({{ deck.language.code }})</div>
+
+<div class="card" style="margin-top:12px;">
+  <div class="muted">Expected columns:</div>
+  <div class="muted"><code>word</code> (required), <code>translation</code>, <code>context</code> (or <code>context_sentence</code>), <code>rank</code></div>
+</div>
+
+{% if errors %}
+  <div class="card" style="margin-top:12px;">
+    <b>Problems found:</b>
+    <ul>
+      {% for e in errors %}
+        <li>{{ e }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="card" style="margin-top:12px;">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div class="row" style="gap:8px;">
+    <button class="btn btn-primary" type="submit">Import</button>
+    <a class="btn" href="{% url 'deck_manage' deck.id %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

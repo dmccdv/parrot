@@ -54,3 +54,7 @@ class DeckVisibilityForm(forms.ModelForm):
         model = Deck
         fields = ["is_public"]
         labels = {"is_public": "Public (show in Explore)"}
+
+
+class DeckImportCSVForm(forms.Form):
+    csv_file = forms.FileField()

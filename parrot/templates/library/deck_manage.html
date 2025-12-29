@@ -13,6 +13,11 @@
   <a class="btn" href="{% url 'library' %}">Back to library</a>
 </div>
 
+<div class="row" style="gap:8px; margin-top:12px;">
+  <a class="btn" href="{% url 'deck_export_csv' deck.id %}">Export CSV</a>
+  <a class="btn" href="{% url 'deck_import_csv' deck.id %}">Import CSV</a>
+</div>
+
 {% if not cards %}
   <p class="muted" style="margin-top:12px;">No cards yet.</p>
 {% else %}

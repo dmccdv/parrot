@@ -9,8 +9,10 @@ from django.db import transaction
 from apps.core.models import Deck, Flashcard, DeckCard
 from apps.library.models import UserDeck
 from apps.library.services.counts import compute_due_new_counts
-from apps.library.forms import UserDeckSettingsForm, DeckCreateForm, CardCreateForm, CardEditForm, DeckVisibilityForm
+from apps.library.services.csv_io import parse_csv_bytes, import_rows_into_deck, export_deck_to_csv_text
+from apps.library.forms import UserDeckSettingsForm, DeckCreateForm, CardCreateForm, CardEditForm, DeckVisibilityForm, DeckImportCSVForm
 from apps.study.models import StudySession
+
 
 def _require_deck_owner(request, deck: Deck):
     if deck.created_by_id != request.user.id:
@@ -194,3 +196,45 @@ def deck_visibility(request, deck_id: int):
         form = DeckVisibilityForm(instance=deck)
 
     return render(request, "library/deck_visibility.html", {"deck": deck, "form": form})
+
+
+@login_required
+def deck_export_csv(request, deck_id: int):
+    deck = get_object_or_404(Deck.objects.select_related("language"), id=deck_id)
+
+    if deck.created_by_id != request.user.id:
+        return HttpResponseForbidden("Only the creator can export this deck.")
+
+    csv_text = export_deck_to_csv_text(deck)
+
+    filename = f"{deck.language.code}_{deck.title}".replace(" ", "_") + ".csv"
+    resp = HttpResponse(csv_text, content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return resp
+
+
+@login_required
+def deck_import_csv(request, deck_id: int):
+    deck = get_object_or_404(Deck.objects.select_related("language"), id=deck_id)
+
+    if deck.created_by_id != request.user.id:
+        return HttpResponseForbidden("Only the creator can import into this deck.")
+
+    if request.method == "POST":
+        form = DeckImportCSVForm(request.POST, request.FILES)
+        if form.is_valid():
+            f = form.cleaned_data["csv_file"]
+            rows, errors = parse_csv_bytes(f.read())
+            if errors:
+                return render(request, "library/deck_import.html", {"deck": deck, "form": form, "errors": errors})
+
+            stats = import_rows_into_deck(deck=deck, user=request.user, rows=rows)
+            messages.success(
+                request,
+                f"Imported: {stats['created']} created, {stats['attached']} attached, {stats['skipped']} skipped."
+            )
+            return redirect("deck_manage", deck_id=deck.id)
+    else:
+        form = DeckImportCSVForm()
+
+    return render(request, "library/deck_import.html", {"deck": deck, "form": form})
