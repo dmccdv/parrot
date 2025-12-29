@@ -47,3 +47,10 @@ class CardEditForm(forms.ModelForm):
     class Meta:
         model = Flashcard
         fields = ["word", "translation", "context_sentence", "notes", "tags"]
+
+
+class DeckVisibilityForm(forms.ModelForm):
+    class Meta:
+        model = Deck
+        fields = ["is_public"]
+        labels = {"is_public": "Public (show in Explore)"}

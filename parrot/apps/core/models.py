@@ -22,6 +22,8 @@ class Deck(models.Model):
     version = models.CharField(max_length=64, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
+    is_public = models.BooleanField(null=False, default=False)
+    
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True, blank=True,

@@ -4,6 +4,11 @@
 <div class="muted">{{ deck.language.name }} ({{ deck.language.code }})</div>
 
 <div class="row" style="gap:8px; margin-top:12px;">
+  {% if deck.created_by_id == user.id %}
+    <a class="btn" href="{% url 'deck_visibility' deck.id %}">
+      Visibility: {% if deck.is_public %}Public{% else %}Private{% endif %}
+    </a>
+  {% endif %}
   <a class="btn btn-primary" href="{% url 'card_create' deck.id %}">Add card</a>
   <a class="btn" href="{% url 'library' %}">Back to library</a>
 </div>

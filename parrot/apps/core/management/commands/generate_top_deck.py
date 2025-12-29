@@ -82,6 +82,7 @@ class Command(BaseCommand):
                     "is_generated": True,
                     "source": source,
                     "version": version,
+                    "is_public": True
                 },
             )
             if not deck_created:
@@ -94,6 +95,9 @@ class Command(BaseCommand):
                     changed = True
                 if version and deck.version != version:
                     deck.version = version
+                    changed = True
+                if not deck.is_public:
+                    deck.is_public = True
                     changed = True
                 if changed:
                     deck.save(update_fields=["is_generated", "source", "version"])

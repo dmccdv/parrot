@@ -6,7 +6,7 @@ from apps.study.models import StudySession
 
 
 def explore(request):
-    decks_qs = Deck.objects.all().order_by("title")
+    decks_qs = Deck.objects.filter(is_public=True).order_by("title")
 
     if request.user.is_authenticated:
         decks_qs = decks_qs.annotate(

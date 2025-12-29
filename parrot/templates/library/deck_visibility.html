@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Deck visibility</h1>
+
+<div class="card">
+  <b>{{ deck.title }}</b>
+  <div class="muted">{{ deck.language.name }} ({{ deck.language.code }})</div>
+</div>
+
+<form method="post" class="card" style="margin-top:12px;">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <div class="row" style="gap:8px;">
+    <button class="btn btn-primary" type="submit">Save</button>
+    <a class="btn" href="{% url 'library' %}">Cancel</a>
+  </div>
+
+  <div class="muted" style="margin-top:10px;">
+    Public decks appear in Explore for everyone. Private decks stay in your Library only.
+  </div>
+</form>
+{% endblock %}

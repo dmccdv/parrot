@@ -9,7 +9,7 @@ from django.db import transaction
 from apps.core.models import Deck, Flashcard, DeckCard
 from apps.library.models import UserDeck
 from apps.library.services.counts import compute_due_new_counts
-from apps.library.forms import UserDeckSettingsForm, DeckCreateForm, CardCreateForm, CardEditForm
+from apps.library.forms import UserDeckSettingsForm, DeckCreateForm, CardCreateForm, CardEditForm, DeckVisibilityForm
 from apps.study.models import StudySession
 
 def _require_deck_owner(request, deck: Deck):
@@ -57,8 +57,9 @@ def library(request):
 @login_required
 def add_to_library(request, deck_id: int):
     deck = get_object_or_404(Deck, id=deck_id)
-    obj = UserDeck.objects.get_or_create(user=request.user, deck=deck)
-    print(obj)
+    if not deck.is_public:
+        return HttpResponseForbidden("This deck is private.")
+    UserDeck.objects.get_or_create(user=request.user, deck=deck)
     if request.headers.get("HX-Request"):
         return HttpResponse("OK")
     return redirect("library")
@@ -174,3 +175,22 @@ def card_edit(request, card_id: int):
         form = CardEditForm(instance=card)
 
     return render(request, "library/card_edit.html", {"card": card, "form": form, "next": request.GET.get("next", "")})
+
+
+@login_required
+def deck_visibility(request, deck_id: int):
+    deck = get_object_or_404(Deck.objects.select_related("language"), id=deck_id)
+
+    if deck.created_by_id != request.user.id:
+        return HttpResponseForbidden("Only the creator can change visibility.")
+
+    if request.method == "POST":
+        form = DeckVisibilityForm(request.POST, instance=deck)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Deck visibility updated.")
+            return redirect("library")
+    else:
+        form = DeckVisibilityForm(instance=deck)
+
+    return render(request, "library/deck_visibility.html", {"deck": deck, "form": form})
