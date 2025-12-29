@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -7,6 +8,7 @@ from django.db.models import Exists, OuterRef
 from apps.core.models import Deck
 from apps.library.models import UserDeck
 from apps.library.services.counts import compute_due_new_counts
+from apps.library.forms import UserDeckSettingsForm
 from apps.study.models import StudySession
 
 
@@ -63,3 +65,19 @@ def remove_from_library(request, deck_id: int):
     if request.headers.get("HX-Request"):
         return HttpResponse("OK")
     return redirect("library")
+
+
+@login_required
+def deck_settings(request, deck_id: int):
+    ud = get_object_or_404(UserDeck, user=request.user, deck_id=deck_id)
+
+    if request.method == "POST":
+        form = UserDeckSettingsForm(request.POST, instance=ud)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Deck settings saved.")
+            return redirect("library")
+    else:
+        form = UserDeckSettingsForm(instance=ud)
+
+    return render(request, "library/deck_settings.html", {"ud": ud, "form": form})

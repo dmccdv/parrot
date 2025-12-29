@@ -28,7 +28,7 @@
               Study
             </a>
           {% endif %}
-
+          <a class="btn" href="{% url 'deck_settings' ud.deck.id %}">Settings</a>
           <button class="btn"
             hx-post="/library/remove/{{ ud.deck.id }}/"
             hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'

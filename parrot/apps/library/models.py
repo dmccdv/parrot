@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 
 class UserDeck(models.Model):
@@ -10,7 +11,7 @@ class UserDeck(models.Model):
     added_at = models.DateTimeField(auto_now_add=True)
     daily_new_limit = models.PositiveIntegerField(default=20)
     chunk_size = models.PositiveIntegerField(default=20)
-    new_ratio = models.FloatField(default=2.0)
+    new_ratio = models.FloatField(default=0.2)
     
     cached_due_count = models.PositiveIntegerField(default=0)
     cached_new_count = models.PositiveIntegerField(default=0)
@@ -30,11 +31,22 @@ class UserDeck(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["user", "deck"], name="uniq_user_deck"),
+            models.CheckConstraint(
+                check=models.Q(new_ratio__gte=0.0) & models.Q(new_ratio__lte=1.0),
+                name="new_ratio_between_0_and_1",
+            ),
         ]
         indexes = [
             models.Index(fields=["user", "is_active"]),
             models.Index(fields=["user", "last_studied_at"])
         ]
+
+    def clean(self):
+        super().clean()
+        if not (0.0 <= self.new_ratio <= 1.0):
+            raise ValidationError({
+                "new_ratio": "Must be between 0.0 and 1.0"
+            })
 
     def bump_today(self, n=1):
         today = timezone.localdate()
