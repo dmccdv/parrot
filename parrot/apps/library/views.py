@@ -13,8 +13,7 @@ from apps.study.models import StudySession
 @login_required
 def library(request):
     user_decks = (
-        UserDeck.objects
-        .select_related("deck", "deck__language")
+        UserDeck.objects.select_related("deck", "deck__language")
         .filter(user=request.user)
         .annotate(
             has_active_session=Exists(
@@ -35,7 +34,14 @@ def library(request):
             ud.cached_new_count = new
             ud.cached_total_in_deck = total
             ud.cached_at = timezone.now()
-            ud.save(update_fields=["cached_due_count", "cached_new_count", "cached_total_in_deck", "cached_at"])
+            ud.save(
+                update_fields=[
+                    "cached_due_count",
+                    "cached_new_count",
+                    "cached_total_in_deck",
+                    "cached_at",
+                ]
+            )
 
     return render(request, "library/library.html", {"user_decks": user_decks})
 
