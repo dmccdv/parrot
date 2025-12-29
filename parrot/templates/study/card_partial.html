@@ -1,32 +1,37 @@
 <div class="card">
-    <div class="muted">Card {{ session.index|add:1 }} of {{ session.queue|length }}</div>
-  
-    <h2>{{ card.word }}</h2>
-  
-    <details>
-      <summary class="btn">Flip</summary>
-      <div style="margin-top:10px;">
-        {% if card.translation %}<div><b>Translation:</b> {{ card.translation }}</div>{% endif %}
-        {% if card.context %}<div><b>Context:</b> {{ card.context }}</div>{% endif %}
-      </div>
-    </details>
-  
-    <form
-      hx-post="/study/grade/{{ session.id }}/"
-      hx-target="#study-area"
-      hx-swap="innerHTML"
-      style="margin-top:12px;"
-    >
-      {% csrf_token %}
-      <input type="hidden" name="index" value="{{ session.index }}">
-      <input type="hidden" name="nonce" value="{{ session.current_nonce }}">
-  
-      <div class="row" style="flex-wrap:wrap;">
-        <button class="btn" name="quality" value="1">Forgot</button>
-        <button class="btn" name="quality" value="3">Hard</button>
-        <button class="btn btn-primary" name="quality" value="4">Good</button>
-        <button class="btn" name="quality" value="5">Easy</button>
-      </div>
-    </form>
-  </div>
-  
+  <div class="muted">Card {{ session.index|add:1 }} of {{ session.queue|length }}</div>
+
+  <h2>{{ card.word }}</h2>
+
+  <details id="flip-{{ session.id }}"
+           ontoggle="if(this.open){ const s=this.querySelector('summary'); if(s){ s.remove(); } }">
+    <summary class="btn">Flip</summary>
+
+    <div style="margin-top:10px;">
+      {% if card.translation %}
+        <div><b>Translation:</b> {{ card.translation }}</div>
+      {% endif %}
+      {% if card.context_sentence %}
+        <div><b>Context:</b> {{ card.context_sentence }}</div>
+      {% endif %}
+
+      <form
+        hx-post="/study/grade/{{ session.id }}/"
+        hx-target="#study-area"
+        hx-swap="innerHTML"
+        style="margin-top:12px;"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="index" value="{{ session.index }}">
+        <input type="hidden" name="nonce" value="{{ session.current_nonce }}">
+
+        <div class="row" style="flex-wrap:wrap;">
+          <button class="btn" name="quality" value="1">Forgot</button>
+          <button class="btn" name="quality" value="3">Hard</button>
+          <button class="btn btn-primary" name="quality" value="4">Good</button>
+          <button class="btn" name="quality" value="5">Easy</button>
+        </div>
+      </form>
+    </div>
+  </details>
+</div>

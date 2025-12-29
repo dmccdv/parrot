@@ -68,6 +68,7 @@ def study_start(request, deck_id: int):
         )
 
         if not queue:
+            ud.save(update_fields=["new_today", "new_today_date"])
             return render(request, "study/empty.html", {"deck": deck})
 
         existing_progress_ids = set(
@@ -153,9 +154,8 @@ def grade_card(request, session_id: int):
 
     ud = UserDeck.objects.select_for_update().get(user=request.user, deck=session.deck)
     ud.bump_today(1)
-    if interval_before == 0 and progress.repetitions >= 1:
-        ud.total_new_seen += 1
-    ud.save(update_fields=["last_studied_at", "reviews_today", "reviews_today_date", "total_reviews", "total_new_seen"])
+    ud.save(update_fields=["last_studied_at", "reviews_today", "reviews_today_date", "total_reviews"])
+
 
     session.index += 1
     if session.index >= len(session.queue):

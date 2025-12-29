@@ -1,5 +1,7 @@
 from django.utils import timezone
 from apps.core.models import Flashcard
+from django.db.models import F
+
 
 def select_session_queue(user, deck, chunk_size: int, new_ratio: float, daily_new_limit: int, new_today: int):
     now = timezone.now()
@@ -8,7 +10,7 @@ def select_session_queue(user, deck, chunk_size: int, new_ratio: float, daily_ne
         deck_cards__deck=deck,
         progress__user=user,
         progress__due_at__lte=now,
-    ).distinct().order_by("progress__due_at")
+    ).distinct().order_by("progress__due_at", "id")
 
     due_ids = list(due_qs.values_list("id", flat=True)[:chunk_size])
 
@@ -31,7 +33,8 @@ def select_session_queue(user, deck, chunk_size: int, new_ratio: float, daily_ne
         .filter(deck_cards__deck=deck)
         .exclude(progress__user=user)
         .distinct()
-        .order_by("frequency_rank", "id")
+        .order_by(F("frequency_rank").asc(nulls_last=True), "id")
+
     )
     new_ids = list(new_qs.values_list("id", flat=True)[:new_target])
 
