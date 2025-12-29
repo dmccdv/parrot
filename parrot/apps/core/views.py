@@ -1,6 +1,8 @@
-from django.db.models import Prefetch, Q, Count
+from django.db.models import Prefetch, Q, Count, Exists, OuterRef
 from django.shortcuts import render
 from apps.core.models import Language, Deck
+from apps.library.models import UserDeck
+from apps.study.models import StudySession
 
 
 def explore(request):
@@ -13,6 +15,19 @@ def explore(request):
                 "deck_cards__card__progress",
                 filter=Q(deck_cards__card__progress__user=request.user),
                 distinct=True,
+            ),
+            in_library=Exists(
+                UserDeck.objects.filter(
+                    user=request.user,
+                    deck=OuterRef("pk"),
+                )
+            ),
+            has_active_session=Exists(
+                StudySession.objects.filter(
+                    user=request.user,
+                    deck=OuterRef("pk"),
+                    status="active",
+                )
             ),
         )
     else:

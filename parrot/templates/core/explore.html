@@ -10,19 +10,28 @@
       <li>
         <b>{{ deck.title }}</b>
         {% if user.is_authenticated %}
-          <button class="btn"
-            hx-post="{% url 'library_add' deck.id %}"
-            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
-            hx-swap="none">
-            Add to library
-          </button>
+          {% if deck.in_library %}
+            {% if deck.has_active_session %}
+              <a class="btn btn-primary" href="{% url 'study_start' deck.id %}">
+                Resume
+              </a>
+            {% else %}
+              <span class="muted">✓ In your library</span>
+            {% endif %}
+          {% else %}
+            <button class="btn"
+              hx-post="{% url 'library_add' deck.id %}"
+              hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+              hx-swap="none">
+              Add to library
+            </button>
+          {% endif %}
         {% endif %}
       
         <span class="muted">
-          {% if deck.is_generated %}generated{% else %}manual{% endif %}
           •
           {% if deck.known_cards is not None %}
-            You already know {{ deck.known_cards }} of {{ deck.total_cards }} words
+            You've seen {{ deck.known_cards }} of {{ deck.total_cards }} words
           {% else %}
             {{ deck.total_cards }} cards
           {% endif %}
