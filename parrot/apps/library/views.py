@@ -43,7 +43,8 @@ def library(request):
 @login_required
 def add_to_library(request, deck_id: int):
     deck = get_object_or_404(Deck, id=deck_id)
-    UserDeck.objects.get_or_create(user=request.user, deck=deck)
+    obj = UserDeck.objects.get_or_create(user=request.user, deck=deck)
+    print(obj)
     if request.headers.get("HX-Request"):
         return HttpResponse("OK")
     return redirect("library")
